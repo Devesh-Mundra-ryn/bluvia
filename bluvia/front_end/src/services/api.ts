@@ -1,7 +1,7 @@
 import { LatLng, MetalData, SearchResult } from '../types';
 
 // Azure deployment URL or local dev URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'bluvia-chayb9czgacrdba5.canadacentral-01.azurewebsites.net';
 
 export const fetchMetalData = async (location: LatLng): Promise<MetalData> => {
   try {
