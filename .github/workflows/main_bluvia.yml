@@ -29,12 +29,8 @@ jobs:
 
       - name: Prepare deployment package
         run: |
-          mkdir deploy
-          cp -r bluvia/back_end/* deploy/
-          cp bluvia/back_end/startup.command deploy/
-          cd deploy
-          zip -r ../release.zip .
-          cd ..
+          cd bluvia/back_end
+          zip -r ../../release.zip .
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
