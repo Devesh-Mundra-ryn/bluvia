@@ -1,1 +1,1 @@
-gunicorn --bind=0.0.0.0 --timeout 600 API:app
+gunicorn --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0 --timeout 600 API:app
