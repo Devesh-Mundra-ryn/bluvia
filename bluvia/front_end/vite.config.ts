@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8000', // For local development
+        target: 'bluvia-chayb9czgacrdba5.canadacentral-01.azurewebsites.net', // For local development
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
