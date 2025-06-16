@@ -30,7 +30,9 @@ jobs:
           source venv/bin/activate
       
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+        cd bluvia/backend
+        pip install -r requirements.txt
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
@@ -71,6 +73,10 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_55CFE942EA7F451786E37A50CD10AEA0 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_DAFF1262D58B478CA0F9A73EE268D1F3 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_14B7891D7ECC435EA2114A07E843944D }}
+
+          
+      - name: Make startup.command executable
+        run: chmod +x bluvia/startup.command
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
