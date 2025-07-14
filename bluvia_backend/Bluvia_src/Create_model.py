@@ -1,15 +1,13 @@
-# This program doesn't return anything it just trains a base ai ARFRegressor model using the data from soil_sem_data.csv
-
 import pandas as pd
 import joblib
 from river import stream
 from river.forest import ARFRegressor
 from river import multioutput as r_multioutput
 
-soil_sem_data = "C:/Users/nikhi/workspaces/bluvia-nsb/Bluvia_csv/soil_sem_data.csv"
-model_save_path = "C:/Users/nikhi/workspaces/bluvia-nsb/model_save_path.joblib"
+from .path_utils import get_data_path, get_model_path
 
-
+soil_sem_data = get_data_path("soil_sem_data.csv")
+model_save_path = get_model_path()
 
 def creating_training_data(csv_file):
     data_file = pd.read_csv(csv_file)
@@ -38,6 +36,6 @@ def training_river_model(X_train, Y_train, model_save_path):
     print("The River Model is saved to", model_save_path)
     return river_model
 
-x_train,y_train=creating_training_data(soil_sem_data)
-river_model=training_river_model(x_train,y_train,model_save_path)
-
+if __name__ == "__main__":
+    x_train, y_train = creating_training_data(soil_sem_data)
+    river_model = training_river_model(x_train, y_train, model_save_path)
