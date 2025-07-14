@@ -24,14 +24,14 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
-          cd bluvia/back_end
+          cd bluvia_backend
           pip install -r requirements.txt
 
       # Create a zip with all backend files at the root of the zip
       - name: Prepare deployment package
         run: |
-          cd bluvia/back_end
-          zip -r ../../release.zip ./*
+          cd bluvia_backend
+          zip -r ../release.zip ./*
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
@@ -60,7 +60,10 @@ jobs:
         run: unzip -o release.zip
 
       - name: Make startup.command executable
-        run: chmod +x startup.command
+        run: |
+          if [ -f startup.command ]; then
+            chmod +x startup.command
+          fi
 
       - name: Login to Azure
         uses: azure/login@v2
