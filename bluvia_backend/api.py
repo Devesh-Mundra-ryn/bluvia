@@ -8,11 +8,10 @@ import csv
 from io import StringIO
 import os
 
-USER_DATA_PATH = "user_data.csv"
+USER_DATA_PATH = os.environ.get("BLUVIA_USER_DATA_PATH", "user_data.csv")
 
 app = FastAPI(title="GeoMetals API")
 
-# ======= Models =======
 class MetalResult(BaseModel):
     name: str
     concentration: float
@@ -41,7 +40,6 @@ class InfoSection(BaseModel):
 class InfoContent(BaseModel):
     sections: List[InfoSection]
 
-# ======= Utility Functions =======
 def get_risk_level(metal: str, value: float) -> str:
     if value < 50:
         return "low"
@@ -50,7 +48,6 @@ def get_risk_level(metal: str, value: float) -> str:
     return "high"
 
 def append_user_data(rows, fieldnames):
-    """Append uploaded rows to the cumulative user_data.csv."""
     file_exists = os.path.isfile(USER_DATA_PATH)
     with open(USER_DATA_PATH, "a", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -59,14 +56,11 @@ def append_user_data(rows, fieldnames):
         writer.writerows(rows)
 
 def load_user_data():
-    """Load all user-uploaded data as a list of dicts."""
     if not os.path.isfile(USER_DATA_PATH):
         return []
     with open(USER_DATA_PATH, "r", newline="") as f:
         reader = csv.DictReader(f)
         return list(reader)
-
-# ============== Endpoints ==============
 
 @app.post("/api/analyze", response_model=AnalysisResponse)
 async def analyze_contamination(request: dict):
@@ -77,8 +71,6 @@ async def analyze_contamination(request: dict):
             raise HTTPException(status_code=400, detail="Latitude and longitude required")
 
         predictions = predict_metals(lat, lng)
-
-        # Integrate user data into model calculation:
         user_data = load_user_data()
         predictions = update_metals_with_user_data(predictions, user_data, lat, lng)
 
@@ -104,76 +96,22 @@ async def upload_file(
     userId: Optional[str] = Form(None),
     metadata: Optional[str] = Form(None)
 ):
-    """
-    Endpoint to upload a CSV file. Expects a multipart/form-data request with a file field.
-    Optionally accepts userId and metadata (as JSON string).
-    """
     try:
-        # Parse metadata if provided
         metadata_obj = {}
         if metadata:
             try:
                 metadata_obj = UploadMetadata.parse_raw(metadata).dict()
             except Exception:
-                metadata_obj = {}
+                pass
 
-        # Read and decode CSV file contents
-        try:
-            contents = await file.read()
-            csv_data = StringIO(contents.decode("utf-8"))
-        except Exception as e:
-            return UploadResponse(success=False, fileId="", error=f"Failed to decode file: {e}")
-
-        try:
-            reader = csv.DictReader(csv_data)
-            rows = list(reader)
-            fieldnames = reader.fieldnames
-        except Exception as e:
-            return UploadResponse(success=False, fileId="", error=f"Failed to parse CSV: {e}")
-
+        content = await file.read()
+        s = StringIO(content.decode("utf-8"))
+        reader = csv.DictReader(s)
+        rows = list(reader)
         if not rows:
-            return UploadResponse(success=False, fileId="", error="Empty or invalid CSV file")
+            return UploadResponse(success=False, fileId="", error="Empty file")
 
-        # Append data to cumulative user data file
-        append_user_data(rows, fieldnames)
-
-        # Assign a unique file ID to this upload
-        file_id = str(uuid.uuid4())
-
-        # For demonstration, we return mock results:
-        mock_results = {
-            "metals": [
-                {"name": "Fe", "concentration": 125.4, "unit": "ppm"},
-                {"name": "Pb", "concentration": 12.3, "unit": "ppm"}
-            ]
-        }
-
-        return UploadResponse(
-            success=True,
-            fileId=file_id,
-            results=mock_results,
-            error=None
-        )
+        append_user_data(rows, reader.fieldnames)
+        return UploadResponse(success=True, fileId=str(uuid.uuid4()), error=None, results={"rows": len(rows)})
     except Exception as e:
-        return UploadResponse(
-            success=False,
-            fileId="",
-            error=str(e)
-        )
-
-@app.get("/api/content/info", response_model=InfoContent)
-async def get_info_content():
-    return InfoContent(
-        sections=[
-            InfoSection(
-                title="About This Project",
-                content="This tool predicts concentrations of heavy metals based on GPS location using a trained AI model built on real SEM-EDS data, plus user-submitted data.",
-                lastUpdated="2025-07-08"
-            ),
-            InfoSection(
-                title="How It Works",
-                content="The model uses Gradient Boosting to estimate metal levels based on latitude, longitude, and incorporates user-uploaded data.",
-                lastUpdated="2025-07-08"
-            )
-        ]
-    )
+        return UploadResponse(success=False, fileId="", error=str(e))
