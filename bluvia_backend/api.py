@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.middleware.cors import CORSMiddleware  # <-- Add this import
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
@@ -11,6 +12,16 @@ import os
 USER_DATA_PATH = os.environ.get("BLUVIA_USER_DATA_PATH", "user_data.csv")
 
 app = FastAPI(title="GeoMetals API")
+
+# --- Add this CORS configuration block ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Change this to your frontend URL in production, e.g., ["https://yourfrontend.com"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+# -----------------------------------------
 
 class MetalResult(BaseModel):
     name: str
