@@ -1,19 +1,3 @@
-'''
-input: string varible that holds the path to a csv
-    Ex input: "C:/Users/nikhi/workspaces/bluvia-nsb/Bluvia_csv/test_csv.csv"
-
-then call:
-
-intigrate_new_data(data_csv)
-    data_csv should be the var that stores user inputed csv path
-
-Now the river_model will be trained with new data and our master_csv will be updated
-
-Output:
-    success message
-
-'''
-
 import pandas as pd
 import joblib
 import os
@@ -21,11 +5,11 @@ from river import stream
 from river.forest import ARFRegressor
 from river import multioutput as r_multioutput
 
-soil_sem_data = "C:/Users/nikhi/workspaces/bluvia-nsb/Bluvia_csv/soil_sem_data.csv"
-model_save_path = "C:/Users/nikhi/workspaces/bluvia-nsb/model_save_path.joblib"
-master_csv_file = "C:/Users/nikhi/workspaces/bluvia-nsb/Bluvia_csv/master_csv.csv"
+from .path_utils import get_data_path, get_model_path
 
-
+soil_sem_data = get_data_path("soil_sem_data.csv")
+model_save_path = get_model_path()
+master_csv_file = get_data_path("master_csv.csv")
 
 def creating_New_training_data(new_csv_file):
     data_file = pd.read_csv(new_csv_file)
@@ -73,12 +57,3 @@ def creating_master_csv(new_csv):
         master_csv = new_data
 
     master_csv.to_csv(master_csv_file, index=False)
-    return master_csv_file
-
-def intigrate_new_data(data_csv):
-    new_file = data_csv.replace("\\","/")
-    X_new, Y_new = creating_New_training_data(new_file)
-    retrain_river_model(X_new, Y_new, model_save_path)
-    creating_master_csv(new_file)
-    
-    
