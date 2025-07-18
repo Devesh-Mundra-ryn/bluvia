@@ -11,49 +11,80 @@ soil_sem_data = get_data_path("soil_sem_data.csv")
 model_save_path = get_model_path()
 master_csv_file = get_data_path("master_csv.csv")
 
+def clean_up_df(df):
+    df.columns = df.columns.str.strip().str.lower()
+    rename_map = {
+        'latitude': 'lat',
+        'longitude': 'lon',
+        'fe': 'fe_ppm', 'cr': 'cr_ppm', 'mn': 'mn_ppm',
+        'mo': 'mo_ppm', 'in': 'in_ppm', 'ta': 'ta_ppm',
+        'sem_fe_ppm': 'fe_ppm', 'sem_cr_ppm': 'cr_ppm', 'sem_mn_ppm': 'mn_ppm',
+        'sem_mo_ppm': 'mo_ppm', 'sem_in_ppm': 'in_ppm', 'sem_ta_ppm': 'ta_ppm'
+    }
+    df = df.rename(columns=rename_map)
+    return df
+
 def creating_New_training_data(new_csv_file):
-    data_file = pd.read_csv(new_csv_file)
-    if 'Lat' not in data_file.columns or 'Lon' not in data_file.columns:
-        if "Latitude" not in data_file.columns or "Longitude" not in data_file.columns:
-            raise ValueError("New CSV must contain 'Lat' and 'Lon' columns")
-    else:
-        if 'Lat'  in data_file.columns and 'Lon'  in data_file.columns:
-            target_columns = data_file.drop(columns=["Lat", "Lon"]).columns
-            X_New = data_file[["Lat", "Lon"]].copy()
-        elif "Latitude" not in data_file.columns or "Longitude" not in data_file.columns:
-            target_columns = data_file.drop(columns=["Latitude", "Longitude"]).columns
-            X_New = data_file[["Latitude", "Longitude"]].copy()
-    Y_New = data_file[target_columns].copy()
-    Y_New = Y_New.apply(pd.to_numeric, errors='coerce')
-    if Y_New.isnull().values.any():
-        print("Warning: NaN values found in new target data; filling with 0.")
-        Y_New = Y_New.fillna(0)
+    df = pd.read_csv(new_csv_file)
+    df = clean_up_df(df)
+
+    if 'lat' not in df.columns or 'lon' not in df.columns:
+        raise ValueError("CSV must contain 'lat' and 'lon' columns.")
+
+    target_columns = [col for col in df.columns if col not in ['lat', 'lon']]
+    X_New = df[['lat', 'lon']].copy()
+    Y_New = df[target_columns].apply(pd.to_numeric, errors='coerce').fillna(0)
+
     return X_New, Y_New
 
-def train_river_model_incremental(model, X_train, Y_train):
-    for x_row, y_row in stream.iter_pandas(X_train, Y_train):
-        model.learn_one(x_row, y_row)
-
-def retrain_river_model(X_New, Y_New, model_save_path):
+def retrain_gb_model(X_New, Y_New, model_save_path):
     if os.path.exists(model_save_path):
-        river_model = joblib.load(model_save_path)
+        gb_model = joblib.load(model_save_path)
     else:
-        base_model = ARFRegressor(n_models=10, max_features='sqrt', seed=42)
-        target_columns = Y_New.columns.tolist()
-        river_model = r_multioutput.RegressorChain(base_model, order=target_columns)
-    train_river_model_incremental(river_model, X_New, Y_New)
-    joblib.dump(river_model, model_save_path)
-    print("Model retrained and saved to", model_save_path)
-    return river_model
+        base_model = GradientBoostingRegressor(
+            n_estimators=50,
+            learning_rate=0.05,
+            max_depth=2,
+            min_samples_split=3,
+            min_samples_leaf=2,
+            subsample=0.8,
+            random_state=42
+        )
+        gb_model = MultiOutputRegressor(base_model)
 
-def creating_master_csv(new_csv):
-    required_columns = ['Lat', 'Lon', 'SEM_Fe_ppm', 'SEM_Cr_ppm', 'SEM_Mn_ppm', 'SEM_Mo_ppm', 'SEM_In_ppm']
-    new_data = pd.read_csv(new_csv)[required_columns]
+    gb_model.fit(X_New, Y_New)
+    joblib.dump(gb_model, model_save_path)
+    print("Model retrained and saved to:", model_save_path)
+    return gb_model
+
+def creating_master_csv(new_csv_path):
+    df_new = pd.read_csv(new_csv_path)
+    df_new = clean_up_df(df_new)
+
+    required_columns = ['lat', 'lon', 'fe_ppm', 'cr_ppm', 'mn_ppm', 'mo_ppm', 'in_ppm', 'ta_ppm']
+    missing_cols = [col for col in required_columns if col not in df_new.columns]
+    if missing_cols:
+        raise ValueError(f"New CSV is missing required columns: {missing_cols}")
+
+    df_new = df_new[required_columns]
 
     if os.path.exists(master_csv_file):
-        master_csv = pd.read_csv(master_csv_file)
-        master_csv = pd.concat([master_csv, new_data], ignore_index=True)
+        df_master = pd.read_csv(master_csv_file)
+        df_master = clean_up_df(df_master)
+        df_combined = pd.concat([df_master, df_new], ignore_index=True)
     else:
-        master_csv = new_data
+        df_combined = df_new
 
-    master_csv.to_csv(master_csv_file, index=False)
+    df_combined.to_csv(master_csv_file, index=False)
+    print("Master CSV updated:", master_csv_file)
+    return master_csv_file
+
+def intigrate_new_data(data_csv):
+    new_file = data_csv.replace("\\", "/")
+    print("Integrating data from:", new_file)
+
+    master_csv_file_updated = creating_master_csv(new_file)
+    X_new, Y_new = creating_New_training_data(master_csv_file_updated)
+    retrain_gb_model(X_new, Y_new, GB_save_path)
+
+    print("Data successfully integrated and model updated.")
