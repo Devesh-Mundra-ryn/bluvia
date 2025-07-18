@@ -25,7 +25,6 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
-          # Try root first, fallback to backend (for transition period)
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
           else
@@ -34,7 +33,6 @@ jobs:
 
       - name: Prepare deployment package
         run: |
-          # Copy requirements.txt to root if not already there
           if [ ! -f requirements.txt ] && [ -f bluvia_backend/requirements.txt ]; then
             cp bluvia_backend/requirements.txt .
           fi
@@ -66,9 +64,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_55CFE942EA7F451786E37A50CD10AEA0 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_DAFF1262D58B478CA0F9A73EE268D1F3 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_14B7891D7ECC435EA2114A07E843944D }}
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
