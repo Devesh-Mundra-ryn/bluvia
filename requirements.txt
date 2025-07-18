@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+gunicorn
+pandas
+joblib
+river
+geopy
+pydantic
