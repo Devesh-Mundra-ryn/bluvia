@@ -18,11 +18,13 @@ import joblib
 import os
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.multioutput import MultiOutputRegressor
+from .path_utils import get_data_path, get_model_path
 
 
-soil_sem_data = "C:/Users/nikhi/workspaces/bluvia-nsb/Bluvia_csv/soil_sem_data.csv"
-GB_save_path = "C:/Users/nikhi/workspaces/bluvia-nsb/GB_model_save_path.joblib"
-master_csv_file = "C:/Users/nikhi/workspaces/bluvia-nsb/Bluvia_csv/master_csv.csv"
+
+soil_sem_data = get_data_path("soil_sem_data.csv")
+model_save_path = get_model_path()
+master_csv_file = get_data_path("master_csv.csv")
 
 def clean_up_df(df):
     df.columns = df.columns.str.strip().str.lower()
