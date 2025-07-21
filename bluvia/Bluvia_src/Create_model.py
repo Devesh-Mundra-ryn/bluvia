@@ -5,8 +5,10 @@ import joblib
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.multioutput import MultiOutputRegressor
 
-soil_sem_data = "C:/Users/nikhi/workspaces/bluvia-nsb/Bluvia_csv/soil_sem_data.csv"
-GB_save_path = "C:/Users/nikhi/workspaces/bluvia-nsb/GB_model_save_path.joblib"
+from .path_utils import get_data_path, get_model_path
+
+soil_sem_data = get_data_path("soil_sem_data.csv")
+model_save_path = get_model_path()
 
 def creating_training_data(csv_file):
     data_file = pd.read_csv(csv_file)
