@@ -26,13 +26,14 @@ import pandas as pd
 import os
 import joblib
 from geopy.distance import geodesic
-from geopy.distance import geodesic
 
+from .path_utils import get_data_path, get_model_path
 
+industry_location_file = get_data_path("industry_locations.csv")
+soil_sem_data = get_data_path("soil_sem_data.csv")
+model_save_path = get_model_path()
+master_csv_file = get_data_path("master_csv.csv")
 
-industry_location_file = "C:/Users/nikhi/workspaces/bluvia-nsb/Bluvia_csv/industry_locations.csv"
-soil_sem_data = "C:/Users/nikhi/workspaces/bluvia-nsb/Bluvia_csv/soil_sem_data.csv"
-master_csv_file = "C:/Users/nikhi/workspaces/bluvia-nsb/Bluvia_csv/master_csv.csv"
 
 
 if os.path.exists(industry_location_file):
