@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware  # <-- Add this import
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
-from model import predict_metals, update_metals_with_user_data
+from .model import predict_metals, update_metals_with_user_data
 import uuid
 import csv
 from io import StringIO
