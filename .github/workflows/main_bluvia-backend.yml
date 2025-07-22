@@ -2,25 +2,25 @@ name: Build and deploy Python app to Azure Web App - Bluvia-backend
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
 env:
   AZURE_WEBAPP_NAME: 'Bluvia-backend'
-  PYTHON_VERSION: '3.9'
+  PYTHON_VERSION: '3.9'  # Stick to stable version
+  GUNICORN_CMD: 'gunicorn --bind=0.0.0.0:8000 --workers=2 --timeout=300 --worker-class=uvicorn.workers.UvicornWorker bluvia.api:app'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write  # Required for OIDC
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -33,6 +33,7 @@ jobs:
 
       - name: Create deployment package
         run: |
+          # Include all necessary files
           zip -r release.zip . -x "venv/*" ".git/*" ".github/*" "*.env" "*.zip"
 
       - name: Upload artifact
@@ -46,7 +47,7 @@ jobs:
     needs: build
     permissions:
       contents: read
-      id-token: write  # Must match build job permissions
+      id-token: write
 
     steps:
       - name: Download artifact
@@ -54,7 +55,7 @@ jobs:
         with:
           name: python-app
 
-      - name: Login to Azure (OIDC)
+      - name: Login to Azure
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_55CFE942EA7F451786E37A50CD10AEA0 }}
@@ -70,3 +71,5 @@ jobs:
             WEBSITES_PORT=8000
             SCM_DO_BUILD_DURING_DEPLOYMENT=true
             PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+            GUNICORN_CMD_ARGS=--workers=2 --timeout=300 --worker-class=uvicorn.workers.UvicornWorker
+            STARTUP_COMMAND=${{ env.GUNICORN_CMD }}
