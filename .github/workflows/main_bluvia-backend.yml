@@ -63,34 +63,13 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-      - name: 'Add Application Settings'
-        uses: azure/appservice-settings@v2
-        with:
-            app-name: 'Bluvia-backend'
-            slot-name: 'Production'  # Remove if not using slots
-            app-settings-json: |
-                    [
-                    {
-                          "name": "PYTHON_VERSION",
-                          "value": "3.9",
-                          "slotSetting": false
-                        }
-                      {
-                        "name": "WEBSITES_PORT",
-                        "value": "8000",
-                        "slotSetting": false
-                      },
-                      {
-                        "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
-                        "value": "true",
-                        "slotSetting": false
-                      }
-                    ]
-
-      - name: Deploy to Azure Web App
+      - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          slot-name: 'Production'
+          app-name: 'Bluvia-backend'
+          slot-name: 'Production'  # Remove if not using slots
           package: release.zip
-          
+          app-settings: |
+            WEBSITES_PORT=8000
+            SCM_DO_BUILD_DURING_DEPLOYMENT=true
+            PYTHON_VERSION=3.9
