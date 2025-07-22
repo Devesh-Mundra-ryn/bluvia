@@ -10,69 +10,87 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  AZURE_WEBAPP_NAME: 'Bluvia-backend'
+  AZURE_WEBAPP_PACKAGE_PATH: '.' 
+  PYTHON_VERSION: '3.9'  # Changed from 3.13 for better compatibility
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read #This is required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python version
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Create and start virtual environment
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-      
       - name: Install dependencies
-        run: pip install -r requirements.txt
-        
-      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          # Explicitly install production requirements
+          pip install gunicorn uvicorn fastapi
 
-      - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+      - name: Create deployment package
+        run: |
+          # Include all files except virtual env and git files
+          zip -r release.zip . -x "venv/*" ".git/*" ".github/*" "*.env" "*.zip"
 
-      - name: Upload artifact for deployment jobs
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          path: |
-            release.zip
-            !venv/
+          path: release.zip
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
+    environment: production
 
     steps:
-      - name: Download artifact from build job
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: python-app
 
-      - name: Unzip artifact for deployment
-        run: unzip release.zip
-
-      
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_2087EAF314594512AA97817B026053A4 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_40DFCBBADCD74AAB9E0F0C14F50B3C60 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_76C228CF85CA4BE691251895CE146005 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
-      - name: 'Deploy to Azure Web App'
-        uses: azure/webapps-deploy@v3
-        id: deploy-to-webapp
+      - name: 'Add Application Settings'
+        uses: azure/appservice-settings@v2
         with:
-          app-name: 'Bluvia-backend'
+            app-name: 'Bluvia-backend'
+            slot-name: 'Production'  # Remove if not using slots
+            app-settings-json: |
+                    [
+                    {
+                          "name": "PYTHON_VERSION",
+                          "value": "3.9",
+                          "slotSetting": false
+                        }
+                      {
+                        "name": "WEBSITES_PORT",
+                        "value": "8000",
+                        "slotSetting": false
+                      },
+                      {
+                        "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+                        "value": "true",
+                        "slotSetting": false
+                      }
+                    ]
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
+          package: release.zip
           
