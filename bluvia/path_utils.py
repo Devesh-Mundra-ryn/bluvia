@@ -58,3 +58,7 @@ class PathUtils:
         """Validate that a path exists"""
         path = Path(path) if isinstance(path, str) else path
         return path.exists()
+get_model_path = PathUtils.get_model_path
+get_data_path = PathUtils.get_data_path
+get_base_dir = PathUtils.get_base_dir
+validate_path_exists = PathUtils.validate_path_exists
