@@ -3,7 +3,7 @@ import pandas as pd
 import joblib
 from typing import Dict, Any, List
 
-from bluvia.Bluvia_src.path_utils import get_model_path
+from .path_utils import get_model_path
 
 def predict_metals(lat: float, lng: float) -> Dict[str, float]:
     model_path = get_model_path()
