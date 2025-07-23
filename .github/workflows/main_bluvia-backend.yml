@@ -32,16 +32,18 @@ jobs:
           pip install -r requirements.txt
           pip install gunicorn==20.1.0 uvicorn==0.23.2
           
-          # Test imports with new structure
-          cd bluvia
-          python -c "from path_utils import get_model_path; print(f'Import successful: {get_model_path()}')"
-          cd ..
+          # Test imports with the class-based approach
+          python -c "from bluvia.path_utils import PathUtils; print(f'Model path: {PathUtils.get_model_path()}')"
 
       - name: Create deployment package
         run: |
           # Create clean deployment structure
-          mkdir -p deploy_package/bluvia
-          cp -r bluvia/* requirements.txt *.py deploy_package/
+          mkdir -p deploy_package
+          cp -r bluvia requirements.txt *.py deploy_package/
+          
+          # Create required directories
+          mkdir -p deploy_package/data
+          mkdir -p deploy_package/models
           
           # Ensure proper package structure
           cd deploy_package && zip -r ../release.zip . -x "*.git*" "*__pycache__*"
@@ -81,3 +83,5 @@ jobs:
             WEBSITES_PORT=8000
             SCM_DO_BUILD_DURING_DEPLOYMENT=true
             PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+            BLUVIA_DATA_DIR=/home/site/wwwroot/data
+            BLUVIA_MODEL_PATH=/home/site/wwwroot/models/GB_model.joblib
