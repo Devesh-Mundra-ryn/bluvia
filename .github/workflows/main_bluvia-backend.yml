@@ -7,7 +7,7 @@ on:
 
 env:
   AZURE_WEBAPP_NAME: 'Bluvia-backend'
-  PYTHON_VERSION: '3.9'  # Stick to stable version
+  PYTHON_VERSION: '3.9'
   GUNICORN_CMD: 'gunicorn --bind=0.0.0.0:8000 --workers=2 --timeout=300 --worker-class=uvicorn.workers.UvicornWorker bluvia.api:app'
 
 jobs:
@@ -19,8 +19,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensures all files are checked out
 
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -30,11 +32,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install gunicorn==20.1.0 uvicorn==0.23.2
+          # Verify imports work before deployment
+          python -c "from bluvia.Bluvia_src.path_utils import get_model_path; print('Import test successful')"
 
       - name: Create deployment package
         run: |
-          # Include all necessary files
-          zip -r release.zip . -x "venv/*" ".git/*" ".github/*" "*.env" "*.zip"
+          # Create clean deployment structure
+          mkdir -p deploy_package
+          # Copy only necessary files
+          cp -r bluvia/ requirements.txt *.py deploy_package/
+          # Ensure proper package structure
+          cd deploy_package && zip -r ../release.zip .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -71,5 +79,3 @@ jobs:
             WEBSITES_PORT=8000
             SCM_DO_BUILD_DURING_DEPLOYMENT=true
             PYTHON_VERSION=${{ env.PYTHON_VERSION }}
-            GUNICORN_CMD_ARGS=--workers=2 --timeout=300 --worker-class=uvicorn.workers.UvicornWorker
-            STARTUP_COMMAND=${{ env.GUNICORN_CMD }}
