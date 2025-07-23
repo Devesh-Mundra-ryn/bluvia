@@ -8,7 +8,6 @@ on:
 env:
   AZURE_WEBAPP_NAME: 'Bluvia-backend'
   PYTHON_VERSION: '3.9'
-  GUNICORN_CMD: 'gunicorn --bind=0.0.0.0:8000 --workers=2 --timeout=300 --worker-class=uvicorn.workers.UvicornWorker bluvia.api:app'
 
 jobs:
   build:
@@ -20,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Ensures all files are checked out
+          fetch-depth: 0  # Get complete repository history
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -32,17 +31,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install gunicorn==20.1.0 uvicorn==0.23.2
-          # Verify imports work before deployment
-          python -c "from bluvia.Bluvia_src.path_utils import get_model_path; print('Import test successful')"
+          
+          # Test if the application can be imported
+          cd bluvia
+          python -c "from Bluvia_src.path_utils import get_model_path; print(f'Import successful: {get_model_path()}')"
+          cd ..
 
       - name: Create deployment package
         run: |
           # Create clean deployment structure
-          mkdir -p deploy_package
-          # Copy only necessary files
-          cp -r bluvia/ requirements.txt *.py deploy_package/
+          mkdir -p deploy_package/bluvia
+          cp -r bluvia/* requirements.txt *.py deploy_package/
+          
           # Ensure proper package structure
-          cd deploy_package && zip -r ../release.zip .
+          cd deploy_package && zip -r ../release.zip . -x "*.git*" "*__pycache__*"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
