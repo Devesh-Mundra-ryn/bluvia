@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Get complete repository history
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -32,9 +32,9 @@ jobs:
           pip install -r requirements.txt
           pip install gunicorn==20.1.0 uvicorn==0.23.2
           
-          # Test if the application can be imported
+          # Test imports with new structure
           cd bluvia
-          python -c "from Bluvia_src.path_utils import get_model_path; print(f'Import successful: {get_model_path()}')"
+          python -c "from path_utils import get_model_path; print(f'Import successful: {get_model_path()}')"
           cd ..
 
       - name: Create deployment package
