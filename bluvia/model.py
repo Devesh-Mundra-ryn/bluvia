@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from bluvia.path_utils import get_model_path
 
 def predict_metals(lat: float, lng: float) -> Dict[str, float]:
-    model_path = "/tmp/zipdeploy/extracted/bluvia/GB_model.joblib"
+    model_path = "/tmp/_preCompressedDestinationDir/bluvia/GB_model.joblib"
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"Model file not found at {model_path}")
     river_model = joblib.load(model_path)
