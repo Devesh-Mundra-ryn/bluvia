@@ -16,7 +16,7 @@ app = FastAPI(title="GeoMetals API")
 # --- Add this CORS configuration block ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change this to your frontend URL in production, e.g., ["https://yourfrontend.com"]
+    allow_origins=["https://ambitious-stone-0f864a41e.6.azurestaticapps.net"],  # Change this to your frontend URL in production, e.g., ["https://yourfrontend.com"]
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
