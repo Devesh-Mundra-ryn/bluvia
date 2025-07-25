@@ -38,7 +38,7 @@ class PathUtils:
         return path.absolute()
 
     @staticmethod
-    def get_model_path(model_name: str = "GB_model_save_path.joblib") -> Path:
+    def get_model_path(model_name: str = "GB_model.joblib") -> Path:
         """
         Get path to model file with environment variable fallback
         
