@@ -1,23 +1,23 @@
 # Core web server
-fastapi==0.95.2  # Pinned to stable version
-uvicorn==0.22.0  # Compatible with Python 3.11
+fastapi==0.95.2
+uvicorn==0.17.6  # Downgraded for Python 3.9 compatibility
 gunicorn==20.1.0
 
 # Data processing
-pandas==1.5.3  # Last version before 2.0 changes
-numpy==1.21.6  # Stable version with BitGenerator support
+pandas==1.5.3
+numpy==1.21.6
 
 # Machine learning
-scikit-learn==1.0.2  # Matches numpy 1.21.x
-joblib==1.2.0  # Compatible with scikit-learn 1.0.x
-river==0.15.1  # Latest stable version
+scikit-learn==1.0.2
+joblib==1.2.0
+river==0.15.0  # Latest version available for Python 3.9
 
 # Geospatial
 geopy==2.3.0
 
 # Validation/parsing
-pydantic==1.10.7  # Last 1.x version before v2
+pydantic==1.10.7
 python-multipart==0.0.6
 
 # Utilities
-python-dateutil==2.8.2  # pandas dependency
+python-dateutil==2.8.2
